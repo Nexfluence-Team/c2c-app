@@ -1,6 +1,4 @@
-import type { ScoreSession } from "../lib/session"
-
-type ScoreSession = {
+export type ScoreSession = {
   a: number
   b: number
   engagement: number
