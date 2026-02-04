@@ -1,9 +1,11 @@
+import type { ScoreSession } from "../lib/session"
+
 type ScoreSession = {
   a: number
   b: number
   engagement: number
   formatMatch: number
-  postingFrequency: number
+  topicMatch: number   // ✅ Standardized
   risk: number
 }
 

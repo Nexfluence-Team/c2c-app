@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation"
 import { supabase } from "../lib/supabase"
 import { saveSession } from "../lib/session"
 import Image from "next/image"
+import type { ScoreSession } from "../lib/session"
+
+
 
 export default function InputPage() {
   // --- ALL HOOKS FIRST ---
@@ -63,15 +66,16 @@ export default function InputPage() {
       return
     }
 
-    saveSession({
+    const payload: ScoreSession = {
       a: aNum,
       b: bNum,
       engagement: 5,
       formatMatch: 70,
       topicMatch: 70,
       risk: 20
-    })
+    }
 
+    saveSession(payload)
     router.push("/processing")
   }
 
