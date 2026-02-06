@@ -1,4 +1,5 @@
 "use client"
+
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
@@ -16,32 +17,23 @@ type SessionData = {
 }
 
 export default function Results() {
-  // --- ALL HOOKS FIRST ---
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [session, setSession] = useState<SessionData | null>(null)
 
-  // Mount
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Load Session Safely
   useEffect(() => {
     if (!mounted) return
-
     const data = loadSession()
-    if (!data) {
-      router.push("/")
-    } else {
-      setSession(data)
-    }
+    if (!data) router.push("/")
+    else setSession(data)
   }, [mounted, router])
 
-  // Guard
   if (!mounted || !session) return null
 
-  // Safe Defaults (formula will NEVER break now)
   const a = Number(session.a) || 1
   const b = Number(session.b) || 1
   const engagement = Number(session.engagement) || 5
@@ -50,20 +42,8 @@ export default function Results() {
   const risk = Number(session.risk) || 20
 
   const { final, breakdown } = runCheesecake(
-    {
-      followers: a,
-      engagement,
-      formatMatch,
-      topicMatch,
-      risk
-    },
-    {
-      followers: b,
-      engagement,
-      formatMatch,
-      topicMatch,
-      risk
-    }
+    { followers: a, engagement, formatMatch, topicMatch, risk },
+    { followers: b, engagement, formatMatch, topicMatch, risk }
   )
 
   function label(score: number) {
@@ -80,66 +60,63 @@ export default function Results() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0a0218]">
-
+    <main
+      className="min-h-screen flex items-center justify-center
+                 bg-gradient-to-br from-[#f4f1ff] via-[#fff0fb] to-[#fff7ea]
+                 relative overflow-hidden px-4"
+    >
       {/* Logo */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-2">
-        <Image
-          src="/logofina.png"
-          alt="Nexfluence Logo"
-          width={140}
-          height={50}
-          className="object-contain"
-        />
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+        <Image src="/logofina.png" alt="Nexfluence Logo" width={120} height={40} />
       </div>
 
-      {/* Ambient Glow */}
-      <div className="glow top-10 left-10 opacity-30"></div>
-      <div className="glow bottom-10 right-10 opacity-30"></div>
-      <div className="glow top-1/2 left-1/3 opacity-20"></div>
-
-      {/* Glass Reveal Card */}
+      {/* Glass Card */}
       <div
-        className="glass w-full max-w-xl p-10 relative z-10
-                   bg-black/40 backdrop-blur-2xl border border-purple-400/30
-                   text-white shadow-2xl text-center"
+        className="w-full max-w-xl
+                   bg-white/65 backdrop-blur-xl
+                   border border-white/40
+                   rounded-2xl shadow-2xl
+                   p-6 sm:p-8 md:p-10 text-center"
       >
-        {/* Title */}
+        {/* Heading */}
         <h2
-          className="text-3xl font-extrabold mb-3
-                     bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400
-                     bg-clip-text text-transparent tracking-wide"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
+          className="text-3xl md:text-4xl font-extrabold mb-2
+                     bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500
+                     bg-clip-text text-transparent"
         >
           Collaboration Reveal
         </h2>
 
-        <p className="text-purple-200 text-sm mb-8 italic">
+        <p className="text-gray-600 text-sm mb-8">
           Your creative alignment has been decoded by the Nexfluence engine
         </p>
 
         {/* Score Orb */}
-        <div className="relative flex justify-center mb-6">
-          <div className="absolute w-40 h-40 rounded-full border border-purple-400/20 animate-spin-slow" />
-          <div className="absolute w-28 h-28 rounded-full border-2 border-pink-400/40 animate-ping" />
+        <div className="relative flex justify-center mb-8">
+          <div className="absolute w-44 h-44 rounded-full
+                          bg-gradient-to-r from-purple-300/30 via-pink-300/30 to-yellow-300/30
+                          blur-2xl animate-pulse" />
+
+          <div className="absolute w-32 h-32 rounded-full
+                          border border-purple-300/40 animate-spin-slow" />
 
           <div
             className="w-24 h-24 rounded-full flex items-center justify-center
                        bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400
                        text-4xl font-extrabold text-white
-                       shadow-[0_0_40px_rgba(236,72,153,0.9)]"
+                       shadow-[0_0_40px_rgba(236,72,153,0.6)]"
           >
             {final}
           </div>
         </div>
 
         {/* Label */}
-        <div className="mt-2 text-lg text-purple-200 mb-6">
+        <div className="text-lg font-semibold text-pink-500 mb-6">
           {label(final)}
         </div>
 
         {/* Breakdown */}
-        <div className="space-y-2 text-sm text-left text-purple-100 mb-8">
+        <div className="space-y-2 text-sm text-left text-gray-700 mb-8">
           <p>🌍 Audience Balance: {Math.round(breakdown.audience)}%</p>
           <p>💬 Engagement Quality: {Math.round(breakdown.engagement)}%</p>
           <p>🎨 Content Compatibility: {Math.round(breakdown.content)}%</p>
@@ -148,24 +125,24 @@ export default function Results() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             className="px-6 py-3 rounded-xl font-semibold text-white
-                       bg-gradient-to-r from-purple-500 to-pink-500
-                       hover:from-purple-400 hover:to-pink-400
-                       transition transform hover:scale-105 shadow-lg"
+                       bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-400
+                       hover:opacity-90 transition transform hover:scale-[1.03]
+                       shadow-lg"
             onClick={() => {
               clearSession()
               router.push("/")
             }}
           >
-            Explore New Matches
+            Discover Another Creative Match ✨
           </button>
 
           <button
-            className="px-6 py-3 rounded-xl font-semibold text-purple-200
-                       bg-purple-900/40 border border-purple-400/30
-                       hover:bg-purple-900/60 transition transform hover:scale-105"
+            className="px-6 py-3 rounded-xl font-semibold
+                       bg-white/70 border border-gray-200
+                       text-gray-700 hover:bg-white transition"
             onClick={signOut}
           >
             Sign Out
@@ -173,7 +150,7 @@ export default function Results() {
         </div>
 
         {/* Footer */}
-        <p className="text-xs text-purple-300 mt-8 tracking-wide">
+        <p className="text-xs text-gray-500 mt-8">
           Cheesecake by Nexfluence — turning creative data into collaboration intelligence
         </p>
       </div>

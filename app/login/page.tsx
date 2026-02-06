@@ -1,11 +1,27 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { supabase } from "../../lib/supabase"
+import Select from "../../components/Select"
+import { PLATFORMS, NICHES, FOLLOWER_RANGES } from "../../lib/options"
 
+function followerRangeToNumber(range: string) {
+  switch (range) {
+    case "1k-10k":
+      return 5000
+    case "10k-50k":
+      return 30000
+    case "50k-100k":
+      return 75000
+    case "100k+":
+      return 150000
+    default:
+      return 1000
+  }
+}
 export default function Login() {
-  // --- ALL HOOKS FIRST ---
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
 
@@ -17,6 +33,8 @@ export default function Login() {
     password: "",
     platform: "",
     industry: "",
+    followers: "",
+    profileLink: "",
     requests: ""
   })
 
@@ -31,7 +49,7 @@ export default function Login() {
 
   function update(key: string, value: string) {
     setForm(prev => ({ ...prev, [key]: value }))
-    setError("") // Clear error while typing
+    setError("")
   }
 
   async function submit() {
@@ -76,87 +94,85 @@ export default function Login() {
           return
         }
 
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          name: form.name,
-          platform: form.platform,
-          industry: form.industry,
-          requests: form.requests,
-          bio: `Creator on ${form.platform}`
-        })
+const { error: profileError } = await supabase.from("profiles").insert({
+  id: data.user.id,
+  name: form.name,
+  platform: form.platform,
+  industry: form.industry,
+  followers: Number(form.followers),
+  bio: form.requests || `Creator on ${form.platform}`
+})
 
-        if (profileError) {
-          setError("Profile created, but we couldn’t save your creator details.")
-          setLoading(false)
-          return
-        }
+if (profileError) {
+  console.error(profileError)
+  setError("Account created, but profile details could not be saved.")
+  setLoading(false)
+  return
+}
+
 
         router.push("/")
       }
     } catch {
-      setError("Something went wrong. Please try again in a moment.")
+      setError("Something went wrong. Please try again.")
     }
 
     setLoading(false)
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0a0218]">
-
-      {/* Glow Background */}
-      <div className="glow top-10 left-10 opacity-30"></div>
-      <div className="glow bottom-10 right-10 opacity-30"></div>
+    <main className="min-h-screen flex items-center justify-center
+                     bg-gradient-to-br from-[#f4f1ff] via-[#fdf6ff] to-[#fff9f1]
+                     relative overflow-hidden px-4">
 
       {/* Logo */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-2">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
         <Image
           src="/logofina.png"
           alt="Nexfluence Logo"
-          width={140}
-          height={50}
+          width={120}
+          height={40}
           className="object-contain"
         />
       </div>
 
       {/* Glass Card */}
-      <div
-        className="glass w-full max-w-xl p-10 relative z-10
-                   bg-black/40 backdrop-blur-2xl border border-purple-400/30
-                   text-white shadow-2xl"
-      >
-        {/* Headline */}
-        <h1
-          className="text-4xl font-extrabold text-center mb-2
-                     bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400
-                     bg-clip-text text-transparent tracking-wide"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
-        >
-          Welcome to Cheesecake Platform
+      <div className="w-full max-w-xl
+                      bg-white/60 backdrop-blur-xl
+                      border border-white/40
+                      rounded-2xl shadow-2xl
+                      p-6 sm:p-8 md:p-10">
+
+        {/* Heading */}
+        <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-2
+                       bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500
+                       bg-clip-text text-transparent">
+          Welcome to Cheesecake
         </h1>
 
-        <p className="text-center text-purple-200 text-sm mb-8 italic">
+        <p className="text-center text-gray-600 text-sm mb-6">
           Where creators don’t just collaborate — they build influence ecosystems.
         </p>
 
         {/* Mode Toggle */}
-        <div className="flex mb-6 bg-purple-900/40 rounded-full p-1">
+        <div className="flex mb-6 bg-white/50 rounded-full p-1">
           <button
-            className={`flex-1 py-2 rounded-full transition font-semibold ${
-              mode === "login"
-                ? "bg-purple-500/40 text-white"
-                : "text-purple-300 hover:bg-purple-500/20"
-            }`}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition
+              ${mode === "login"
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                : "text-gray-600 hover:bg-white/60"}
+            `}
             onClick={() => setMode("login")}
           >
             Login
           </button>
 
           <button
-            className={`flex-1 py-2 rounded-full transition font-semibold ${
-              mode === "signup"
-                ? "bg-purple-500/40 text-white"
-                : "text-purple-300 hover:bg-purple-500/20"
-            }`}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition
+              ${mode === "signup"
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                : "text-gray-600 hover:bg-white/60"}
+            `}
             onClick={() => setMode("signup")}
           >
             Sign Up
@@ -168,65 +184,75 @@ export default function Login() {
           {mode === "signup" && (
             <>
               <input
-                className="w-full p-3 rounded-xl
-                           bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                           outline-none focus:bg-purple-900/50 transition"
+                className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                           outline-none focus:ring-2 focus:ring-purple-400"
                 placeholder="Full Name"
                 onChange={e => update("name", e.target.value)}
               />
 
-              <input
-                className="w-full p-3 rounded-xl
-                           bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                           outline-none focus:bg-purple-900/50 transition"
-                placeholder="Primary Platform (YouTube, TikTok, Instagram)"
-                onChange={e => update("platform", e.target.value)}
+              <Select
+                value={form.platform}
+                onChange={v => update("platform", v)}
+                options={PLATFORMS}
+                placeholder="Select primary platform"
               />
 
+              <Select
+                value={form.industry}
+                onChange={v => update("industry", v)}
+                options={NICHES}
+                placeholder="Select industry / niche"
+              />
+
+              <select
+                className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                           outline-none focus:ring-2 focus:ring-purple-400"
+                onChange={e => update("followers", e.target.value)}
+              >
+                <option value="">Select follower range</option>
+                {FOLLOWER_RANGES.map(r => (
+                  <option key={r.label} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+
               <input
-                className="w-full p-3 rounded-xl
-                           bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                           outline-none focus:bg-purple-900/50 transition"
-                placeholder="Industry / Niche (Tech, Fashion, Gaming, Fitness)"
-                onChange={e => update("industry", e.target.value)}
+                className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                           outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="Profile link (optional)"
+                onChange={e => update("profileLink", e.target.value)}
               />
 
               <textarea
                 rows={3}
-                className="w-full p-3 rounded-xl resize-none
-                           bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                           outline-none focus:bg-purple-900/50 transition"
-                placeholder="Special Requests or Collaboration Goals"
+                className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                           outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                placeholder="Special requests or collaboration goals"
                 onChange={e => update("requests", e.target.value)}
               />
             </>
           )}
 
           <input
-            className="w-full p-3 rounded-xl
-                       bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                       outline-none focus:bg-purple-900/50 transition"
+            className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                       outline-none focus:ring-2 focus:ring-purple-400"
             placeholder="Email address"
             onChange={e => update("email", e.target.value)}
           />
 
           <input
             type="password"
-            className="w-full p-3 rounded-xl
-                       bg-purple-900/30 text-purple-100 placeholder-purple-300/70
-                       outline-none focus:bg-purple-900/50 transition"
+            className="w-full p-3 rounded-xl bg-white/70 border border-gray-200
+                       outline-none focus:ring-2 focus:ring-purple-400"
             placeholder="Password"
             onChange={e => update("password", e.target.value)}
           />
         </div>
 
-        {/* Error Box */}
+        {/* Error */}
         {error && (
-          <div
-            className="mt-4 p-3 rounded-lg text-sm
-                       bg-red-900/40 border border-red-400/40
-                       text-red-200 animate-pulse"
-          >
+          <div className="mt-4 text-sm text-red-600 text-center">
             {error}
           </div>
         )}
@@ -234,29 +260,23 @@ export default function Login() {
         {/* Action Button */}
         <button
           disabled={loading}
-          className={`w-full mt-6 py-3 rounded-xl font-semibold text-white
-            bg-gradient-to-r from-purple-500 to-pink-500
-            hover:from-purple-400 hover:to-pink-400
-            transition transform hover:scale-105 shadow-lg
-            ${loading ? "opacity-60 cursor-not-allowed" : ""}
-          `}
           onClick={submit}
+          className="w-full mt-6 py-3 rounded-xl font-semibold text-white
+                     bg-gradient-to-r from-purple-600 to-pink-500
+                     hover:opacity-90 transition
+                     disabled:opacity-60"
         >
           {loading
-            ? "Authenticating..."
+            ? "Authenticating…"
             : mode === "login"
             ? "Enter Nexfluence Network"
             : "Create Creator Profile"}
         </button>
 
-        {/* Industry Quotes */}
-        <div className="mt-8 text-center text-sm text-purple-300 space-y-2">
-          <p>“Collaboration is the new currency of digital growth.”</p>
-          <p>“Every creator is a media company in the making.”</p>
-          <p className="text-purple-400">
-            Designed for creators, brands, and agencies shaping the future of influence
-          </p>
-        </div>
+        {/* Footer Text */}
+        <p className="text-xs text-center text-gray-500 mt-6">
+          Designed for creators, brands, and agencies shaping the future of influence
+        </p>
       </div>
     </main>
   )

@@ -1,51 +1,56 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { supabase } from "../lib/supabase"
 import { saveSession } from "../lib/session"
-import Image from "next/image"
 import type { ScoreSession } from "../lib/session"
-
-
+import Select from "../components/Select"
+import { PLATFORMS, NICHES, FOLLOWER_RANGES } from "../lib/options"
 
 export default function InputPage() {
-  // --- ALL HOOKS FIRST ---
   const router = useRouter()
 
-  const [a, setA] = useState("")
-  const [b, setB] = useState("")
-  const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [error, setError] = useState("")
+
+  const [userFollowers, setUserFollowers] = useState<number | null>(null)
+
+  const [platform, setPlatform] = useState("")
+  const [niche, setNiche] = useState("")
+  const [followersRange, setFollowersRange] = useState("")
+  const [profileLink, setProfileLink] = useState("")
 
   useEffect(() => {
-    setMounted(true)
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/login")
-    })
+    async function init() {
+      setMounted(true)
+
+      const { data } = await supabase.auth.getUser()
+      if (!data.user) {
+        router.push("/login")
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("followers")
+        .eq("id", data.user.id)
+        .single()
+
+        if (profile?.followers == null) {
+  setError("Your follower data is missing. Please update your profile.")
+  return
+}
+
+
+      setUserFollowers(profile.followers)
+    }
+
+    init()
   }, [router])
 
   if (!mounted) return null
-
-  // Allow only positive numbers
-  function handleChange(
-    value: string,
-    setter: (v: string) => void
-  ) {
-    if (value === "") {
-      setter("")
-      setError("")
-      return
-    }
-    
-
-    if (!/^\d+$/.test(value)) {
-      setError("Numbers only — influence is measured in real audiences, not symbols.")
-      return
-    }
-
-    setter(value)
-    setError("")
-  }
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -53,22 +58,19 @@ export default function InputPage() {
   }
 
   function submit() {
-    if (!a || !b) {
-      setError("Both creators need an audience to be matched.")
+    if (!platform || !niche || !followersRange) {
+      setError("Please select platform, niche, and follower range.")
       return
     }
 
-    const aNum = Number(a)
-    const bNum = Number(b)
-
-    if (isNaN(aNum) || isNaN(bNum) || aNum <= 0 || bNum <= 0) {
-      setError("Please enter valid, positive follower counts.")
+    if (!userFollowers) {
+      setError("Unable to read your follower data.")
       return
     }
 
     const payload: ScoreSession = {
-      a: aNum,
-      b: bNum,
+      a: userFollowers,
+      b: Number(followersRange),
       engagement: 5,
       formatMatch: 70,
       topicMatch: 70,
@@ -80,114 +82,118 @@ export default function InputPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0a0218]">
-            {/* Logo */}
-            <div className="absolute top-6 left-6 z-20 flex items-center gap-2">
-              <Image
-                src="/logofina.png"
-                alt="Nexfluence Logo"
-                width={140}
-                height={50}
-                className="object-contain"
-              />
-            </div>
+    <main className="min-h-screen flex items-center justify-center
+                     bg-gradient-to-br from-[#f4f1ff] via-[#fff0fb] to-[#fff7ea]
+                     relative overflow-hidden px-4">
 
-      {/* Ambient Glow */}
-      <div className="glow top-10 left-10 opacity-30"></div>
-      <div className="glow bottom-10 right-10 opacity-30"></div>
+      {/* Logo */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+        <Image
+          src="/logofina.png"
+          alt="Nexfluence Logo"
+          width={120}
+          height={40}
+        />
+      </div>
 
-      {/* Glass Container */}
-      <div
-        className="glass w-full max-w-xl p-10 relative z-10
-                   bg-black/40 backdrop-blur-2xl border border-purple-400/30
-                   text-white shadow-2xl"
-      >
+      {/* Glass Card */}
+      <div className="w-full max-w-xl
+                      bg-white/65 backdrop-blur-xl
+                      border border-white/40
+                      rounded-2xl shadow-2xl
+                      p-6 sm:p-8 md:p-10">
+
         {/* Top Bar */}
         <div className="flex justify-end mb-4">
           <button
             onClick={signOut}
-            className="px-4 py-1.5 rounded-lg text-sm font-semibold
-                       bg-purple-900/40 border border-purple-400/30
-                       text-purple-200 hover:bg-purple-900/60
-                       transition"
+            className="text-sm px-4 py-1.5 rounded-full
+                       bg-white/60 border border-purple-200
+                       text-purple-600 hover:bg-white transition"
           >
             Sign Out
           </button>
         </div>
 
         {/* Heading */}
-        <h2
-          className="text-3xl font-extrabold text-center mb-3
-                     bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400
-                     bg-clip-text text-transparent tracking-wide"
-          style={{ fontFamily: "'Poppins', sans-serif" }}
-        >
-          Creator Compatibility Engine
+        <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2
+                       bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500
+                       bg-clip-text text-transparent">
+          Discover Your Next Creative Match
         </h2>
 
-        <p className="text-center text-purple-200 text-sm mb-8 italic">
-          Tell us the scale of each creator’s influence — we’ll handle the strategy.
+        <p className="text-center text-gray-600 text-sm mb-8">
+          Choose the details of the creator you want to collaborate with
         </p>
 
-        {/* Creator A */}
-        <div className="mb-6">
-          <label className="block mb-2 text-yellow-300 font-semibold">
-            Creator A — How many people move with their content?
-          </label>
-          <input
-            value={a}
-            className={`w-full p-3 rounded-xl outline-none
-              bg-yellow-900/20 text-yellow-100 placeholder-yellow-300/70
-              transition
-              ${error
-                ? "border border-red-400 focus:bg-red-900/30"
-                : "border border-yellow-400/30 focus:bg-yellow-900/40"}
-            `}
-            placeholder="Enter follower count (e.g. 125000)"
-            onChange={e => handleChange(e.target.value, setA)}
+        {/* Form */}
+        <div className="space-y-4">
+
+          <Select
+            value={platform}
+            onChange={setPlatform}
+            options={PLATFORMS}
+            placeholder="Select platform"
           />
+
+          <Select
+            value={niche}
+            onChange={setNiche}
+            options={NICHES}
+            placeholder="Select niche / industry"
+          />
+
+          <select
+            value={followersRange}
+            onChange={e => setFollowersRange(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/70
+                       border border-gray-200
+                       outline-none focus:ring-2 focus:ring-purple-400"
+          >
+            <option value="">Select follower range</option>
+            {FOLLOWER_RANGES.map(r => (
+              <option key={r.label} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Optional Profile Link */}
+          <div className="space-y-1">
+            <input
+              className="w-full p-3 rounded-xl bg-white/70
+                         border border-gray-200
+                         outline-none focus:ring-2 focus:ring-purple-400"
+              placeholder="Creator profile link (optional)"
+              onChange={e => setProfileLink(e.target.value)}
+            />
+            <p className="text-xs text-gray-500 italic">
+              For better AI analysis, please enter the profile link
+            </p>
+          </div>
         </div>
 
-        {/* Creator B */}
-        <div className="mb-8">
-          <label className="block mb-2 text-pink-300 font-semibold">
-            Creator B — What’s the size of their digital community?
-          </label>
-          <input
-            value={b}
-            className={`w-full p-3 rounded-xl outline-none
-              bg-pink-900/20 text-pink-100 placeholder-pink-300/70
-              transition
-              ${error
-                ? "border border-red-400 focus:bg-red-900/30"
-                : "border border-pink-400/30 focus:bg-pink-900/40"}
-            `}
-            placeholder="Enter follower count (e.g. 98000)"
-            onChange={e => handleChange(e.target.value, setB)}
-          />
-        </div>
-
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <p className="text-red-400 text-sm mb-4 animate-pulse text-center">
+          <p className="text-red-600 text-sm text-center mt-4">
             {error}
           </p>
         )}
 
-        {/* Action Button */}
+        {/* Submit */}
         <button
-          className="w-full py-3 rounded-xl font-semibold text-white
-                     bg-gradient-to-r from-purple-500 to-pink-500
-                     hover:from-purple-400 hover:to-pink-400
-                     transition transform hover:scale-105 shadow-lg"
           onClick={submit}
+          className="w-full mt-6 py-3 rounded-xl font-semibold text-white
+                     bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-400
+                     hover:opacity-90 transition transform hover:scale-[1.02]
+                     shadow-lg"
         >
           Generate Collaboration Insight
         </button>
 
-        {/* Footer Copy */}
-        <p className="text-center text-xs text-purple-300 mt-6 tracking-wide">
-          Cheesecake by Nexfluence — built for creators, brands, and digital strategists
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Cheesecake by Nexfluence — built for creators, brands, and strategists
         </p>
       </div>
     </main>
