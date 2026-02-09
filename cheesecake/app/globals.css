@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* ---- Global text visibility fix ---- */
+body {
+  color: #1f2937; /* slate-800 */
+}
+
+/* Improve text contrast inside glass cards */
+.glass {
+  color: #1f2937;
+}
+
+/* Headings stronger on all devices */
+h1, h2, h3 {
+  color: #111827; /* slate-900 */
+}
+
+/* Subtext readability */
+.text-muted {
+  color: #4b5563; /* gray-600 */
+}

@@ -67,14 +67,18 @@ export default function Processing() {
     >
 
       {/* Logo */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
-        <Image
-          src="/logofina.png"
-          alt="Nexfluence Logo"
-          width={120}
-          height={40}
-        />
-      </div>
+      {/* Logo */}
+<div className="absolute top-4 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0 z-20">
+  <Image
+    src="/logofina.png"
+    alt="Nexfluence Logo"
+    width={120}
+    height={40}
+    className="object-contain"
+    priority
+  />
+</div>
+
 
       {/* Glass Card */}
       <div
